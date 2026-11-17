@@ -1,0 +1,10 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+const model = await import('../dist/model.mjs').catch(() => ({}));
+const device = {id:'a',name:'Router',type:'router',ip:'192.168.1.1',vlan:'10',zone:'core',status:'online',x:100,y:100};
+const base = () => ({version:1,name:'Офис',nodes:[{...device},{...device,id:'b',name:'Switch'}],edges:[{id:'ab',from:'a',to:'b',speed:'1 Гбит/с'}],zones:[]});
+test('valid import preserves the map and defaults missing optional data',()=>{assert.equal(typeof model.validateMap,'function');const m=model.validateMap(base());assert.equal(m.nodes[0].ip,'192.168.1.1');assert.equal(m.edges.length,1);});
+test('malformed import, duplicates and dangling links are rejected',()=>{assert.equal(typeof model.validateMap,'function');for(const value of [null,{}, {...base(),nodes:[device,device]}, {...base(),edges:[{id:'x',from:'a',to:'missing'}]}, {...base(),nodes:[{...device,x:Infinity}]}]) assert.throws(()=>model.validateMap(value));});
+test('deleting a device removes its incident connections',()=>{assert.equal(typeof model.removeNode,'function');const m=model.removeNode(base(),'a');assert.equal(m.nodes.length,1);assert.equal(m.edges.length,0);});
+test('IPv4 validation rejects out-of-range addresses',()=>{assert.equal(typeof model.validIP,'function');assert.equal(model.validIP('192.168.1.1'),true);assert.equal(model.validIP('300.2.3.4'),false);assert.equal(model.validIP(''),true);});
+test('empty map is valid and oversize maps are rejected',()=>{assert.equal(typeof model.validateMap,'function');assert.equal(model.validateMap({version:1,name:'Пустая',nodes:[],edges:[],zones:[]}).nodes.length,0);assert.throws(()=>model.validateMap({...base(),nodes:Array.from({length:501},(_,i)=>({...device,id:String(i)}))}));});
