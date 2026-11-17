@@ -3,7 +3,8 @@ import {TYPES, STATUSES, clone, validIP, validateMap, removeNode, demoMap} from 
 const $ = selector => document.querySelector(selector);
 const $$ = selector => [...document.querySelectorAll(selector)];
 const esc = value => String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const uid = () => crypto.randomUUID();
+let fallbackId = 0;
+const uid = () => globalThis.crypto?.randomUUID?.() ?? `netra-${Date.now().toString(36)}-${++fallbackId}-${Math.random().toString(36).slice(2)}`;
 const iconPaths = {
   building:'M4 21V5h11v16M15 10h5v11M2 21h20M8 9h3M8 13h3M8 17h3M18 14h1M18 18h1',
   network:'M9 3h6v5H9zM2 16h6v5H2zM16 16h6v5h-6zM9 16h6v5H9zM12 8v8M5 16v-4h14v4',
